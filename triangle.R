@@ -8,8 +8,6 @@ claims <- filter(tibble(freclaimset2motor$claimset), ClaimStatus == "fully close
 
 claims <- subset(claims, select = c(ClaimID, OccurYear, ManagYear, PaidAmount))
 
-# claims <- claims[,c(1:3,5)]
-
 # Create a column of number of years taken to settle.
 
 claims$difference = claims$ManagYear - claims$OccurYear
@@ -25,11 +23,36 @@ year <- claims %>% group_by(difference, OccurYear) %>% summarise(total = sum(Pai
 
 # Compute cumulative sums.
 
-cumul <- year %>% group_by(OccurYear) %>% mutate(Cumulative = cumsum(total))
+cumulation <- year %>% group_by(OccurYear) %>% mutate(Cumulative = cumsum(total))
 
-cumul <- subset(cumul, select = c(difference, OccurYear, Cumulative))
+simplified_cumulation <- subset(cumulation, select = c(difference, OccurYear, Cumulative))
 
 # Show data in loss development triangle. 
 
-triangle <- pivot_wider(cumul, names_from = difference, values_from = Cumulative)
+triangle <- pivot_wider(simplified_cumulation, names_from = difference, values_from = Cumulative)
+
+# 2. Age to age factors.
+
+# Calculate the age to age factors by adding a new column detailing the year on year increase for 
+# each iteration of year of cumulative claims.
+
+factors <- cumulation %>% group_by(difference, OccurYear) %>% mutate(increase = Cumulative/(Cumulative - total))
+
+# Clean and remove infinite values caused by dividing by 0 in first iteration of development from 0-1 years
+
+factors <- factors[is.finite(rowSums(factors)),]
+
+# Subset relevant columns for triangle. 
+
+factors <- subset(factors, select = c(difference, OccurYear, increase))
+
+# Show data in triangle. 
+
+factors_triangle <- pivot_wider(factors, names_from = difference, values_from = increase)
+
+# 3. Create vector of simple averages of age-to-age factors
+
+averages <- tibble(colMeans(factors_triangle[,2:ncol(factors_triangle)], na.rm = TRUE))
+
+## Next up will be calculating cumulative development factors and projecting ultimate losses. 
 
