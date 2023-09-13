@@ -52,7 +52,12 @@ factors_triangle <- pivot_wider(factors, names_from = difference, values_from = 
 
 # 3. Create vector of simple averages of age-to-age factors
 
-averages <- tibble(colMeans(factors_triangle[,2:ncol(factors_triangle)], na.rm = TRUE))
+averages <- as.list.data.frame(colMeans(factors_triangle[,2:ncol(factors_triangle)], na.rm = TRUE))
 
 ## Next up will be calculating cumulative development factors and projecting ultimate losses. 
+
+CDF <- character()
+for (j in 1:length(averages)-1) {
+  CDF <- append(CDF, prod(averages[if (j==1) c(1:length(averages)) else (-c(1:j))]))
+}
 
