@@ -1,5 +1,6 @@
 library(tidyverse)
 library(CASdatasets)
+library(reticulate)
 data(freclaimset2motor)
 
 # Filtering to only include settled claims and columns of interest.
@@ -60,4 +61,10 @@ CDF <- character()
 for (j in 1:length(averages)-1) {
   CDF <- append(CDF, prod(averages[if (j==1) c(1:length(averages)) else (-c(1:j))]))
 }
+
+source_python("averages.py")
+CDF_2 <- tibble(cumulativemeans(averages))
+CDF_2 <- as.list.data.frame(cumulativemeans(averages))
+
+
 
